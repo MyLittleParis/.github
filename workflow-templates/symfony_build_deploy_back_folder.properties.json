@@ -1,0 +1,13 @@
+{
+  "name": "CI~CD php",
+  "description": "CI~CD workflow for symfony project in back folder in repository",
+  "iconName": "symfony_build_deploy_back_folder",
+  "categories": [
+      "Symfony",
+      "Continuous integration",
+      "Deployment"
+  ],
+  "filePatterns": [
+      "back/composer.json"
+  ]
+}

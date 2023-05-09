@@ -1,0 +1,45 @@
+name: CI~CD Back
+
+on:
+  push:
+    branches:
+      - $protected-branches
+    paths:
+      - 'back/**'
+  pull_request:
+    branches-ignore: # target branch name
+      - $default-branch
+    paths:
+      - 'back/**'
+  workflow_dispatch: ~
+
+concurrency: deploy-back-${{ github.ref_name }}
+
+jobs:
+  backend_build:
+    name: Backend
+    uses: MyLittleParis/github-actions/.github/workflows/build-symfony-npm.yml@master
+    concurrency:
+      group: build-back-${{ github.head_ref || github.ref }}
+      cancel-in-progress: true
+    with:
+      working_directory: ./back
+      sentry_project: api-traverses
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_MEDIA_KEY }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+  backend_deploy:
+    name: Backend
+    needs: backend_build
+    uses: MyLittleParis/github-actions/.github/workflows/deploy-artifact.yml@master
+    if: ${{ needs.backend_build.outputs.deploy_env != '' }}
+    concurrency:
+      group: deploy-back-${{ github.head_ref || github.ref }}
+    with:
+      environment: ${{ needs.backend_build.outputs.deploy_env }}
+      ansible-group: 'backend:&${{ needs.backend_build.outputs.deploy_env }}_api'
+      ansible-requirements-file: 'requirements-back.yml'
+      ansible-role: 'cbrunnkvist.ansistrano-symfony-deploy'
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_MEDIA_KEY }}
